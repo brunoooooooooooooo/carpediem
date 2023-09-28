@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>carpe diem</title>
+
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<style>
+			body {
+				font-family: monospace;
+				text-align: center;
+			}
+
+			#error {
+				color: red;
+				visibility: hidden;
+			}
+
+			#dots {
+				display: none;
+				padding: 0;
+    				margin: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<h3 id="error">something went wrong: </h3>
+
+		<hr>
+		<h1>carpe diem</h1>
+		<hr>
+		<br>
+
+		<canvas id="dots" width="325" height="325"></canvas>
+
+		<form id="questions" onsubmit="return submitForm()">
+			<label for="age">age</label>
+			<input type="number" id="age" required>
+
+			<p>gender<p>
+			<input type="radio" id="male" name="gender" required>
+			<label for="male">male</label>
+			<br>
+			<input type="radio" id="female" name="gender" required>
+			<label for="female">female</label>
+			<br><br>
+
+			<label for="height">height, in centimeters</label>
+			<input type="number" id="height" required>
+			<br>
+			<label for="weight">weight, in kilograms</label>
+			<input type="number" id="weight" required>
+			<br><br>
+
+			<p>smoker?<p>
+			<input type="radio" id="smoker-yes" name="smoker" required>
+			<label for="smoker-yes">yes</label>
+			<br>
+			<input type="radio" id="smoker-no" name="smoker" required>
+			<label for="smoker-no">no</label>
+			<br><br>
+
+			<p>smoked?<p>
+			<input type="radio" id="smoked-yes" name="smoked" required>
+			<label for="smoked-yes">yes</label>
+			<br>
+			<input type="radio" id="smoked-no" name="smoked" required>
+			<label for="smoked-no">no</label>
+			<br><br>
+
+			<p>healthy eater?<p>
+			<input type="radio" id="healthyeater-yes" name="healthyeater" required>
+			<label for="healthyeater-yes">yes</label>
+			<br>
+			<input type="radio" id="healthyeater-no" name="healthyeater" required>
+			<label for="healthyeater-no">no</label>
+			<br><br>
+
+			<p>regularly exercise?<p>
+			<input type="radio" id="active-yes" name="active" required>
+			<label for="active-yes">yes</label>
+			<br>
+			<input type="radio" id="active-no" name="active" required>
+			<label for="active-no">no</label>
+			<br><br>
+
+			<input type="submit" value="go">
+		</form>
+
+		<script>
+			avgExp = 72
+
+			function showError(err) {
+				errElement = document.getElementById("error")
+				errElement.innerHTML += err
+				errElement.style.visibility = "visible"
+				throw new Error(err)
+			}
+
+			async function getAvgExp(gender) {
+				return await fetch("https://json.ipv4.myip.wtf")
+					.then(ipResponse => ipResponse.json())
+					.then(async function(ipData) {
+						return await fetch("https://api.worldbank.org/v2/country/"
+									+ ipData.YourFuckingCountryCode
+									+ "/indicator/SP.DYN.LE00."
+									+ gender
+									+ ".IN?format=json&mrv=1")
+									.then(wbResponse => wbResponse.json())
+									.then(wbData => {
+										avgExp = Math.round(wbData[1][0].value)
+										return avgExp
+									})
+									.catch(wbErr => showError(wbErr))
+					})
+					.catch(ipErr => showError(ipErr))
+			}
+
+			async function getExp(gender, height, weight, smoker, smoked, healthyEater, active) {
+				avgExp = await getAvgExp(gender)
+
+				adjFac = 0
+				if (smoker) adjFac += 10
+				if (smoked) adjFac += 1
+				if (healthyEater) adjFac -= 5
+				if (active) adjFac -= 3
+				
+				bmi = weight / (height / 100) ** 2
+
+				if (bmi >= 40 && bmi < 45) {
+					adjFac += 7
+				} else if (bmi >= 45 && bmi < 50) {
+					adjFac += 9
+				} else if (bmi >= 50 && bmi < 55) {
+					adjFac += 10
+				} else if (bmi >= 55) {
+					adjFac += 14
+				}
+
+				return avgExp - adjFac
+			}
+			
+			function drawDots(age, exp) {
+				canvas = document.getElementById("dots")
+				if(canvas.getContext) {
+					ctx = canvas.getContext("2d")
+					x = 1
+					y = 1
+					for(i = 0; i < exp; i++) {
+						ctx.beginPath()
+						ctx.arc(x * 25, y * 25, 5, 0, 2 * Math.PI)
+
+						if(i < age) {
+							ctx.fill()
+						} else {
+							ctx.stroke()
+						}
+
+						if(x != 12) {
+							x++
+						} else {
+							x = 1
+							y++
+						}
+					}
+				}
+			}
+
+			function submitForm() {
+				doMagic(event.target.elements)
+				return false
+			}
+							
+
+			async function doMagic(formElements) {
+				var age
+				var gender
+				var height
+				var weight
+				var smoker
+				var smoked
+				var healthyEater
+				var active
+
+				age = parseInt(formElements.age.value)
+
+				if (formElements.male.checked) {
+					gender = "MA"
+				} else {
+					gender = "FE"
+				}
+
+				height = parseInt(formElements.height.value)
+				weight = parseInt(formElements.weight.value)
+
+				if (formElements["smoker-yes"].checked) {
+					smoker = true
+				} else {
+					smoker = false
+				}
+
+				if (formElements["smoked-yes"].checked) {
+					smoked = true
+				} else {
+					smoked = false
+				}
+
+				if (formElements["healthyeater-yes"].checked) {
+					healthyEater = true
+				} else {
+					healthyEater = false
+				}
+
+				if (formElements["active-yes"].checked) {
+					active = true
+				} else {
+					active = false
+				}
+
+				exp = await getExp(gender, height, weight, smoker, smoked, healthyEater, active)
+
+				drawDots(age, exp)
+				document.getElementById("questions").style.display = "none"
+				document.getElementById("dots").style.display = "block"
+			}
+		</script>
+	</body>
+</html>
+
