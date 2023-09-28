@@ -13,14 +13,18 @@
 			}
 
 			#error {
+				display: none;
 				color: red;
-				visibility: hidden;
 			}
 
 			#dots {
 				display: none;
 				padding: 0;
     				margin: auto;
+			}
+			
+			#counter {
+				display: none;
 			}
 		</style>
 	</head>
@@ -33,6 +37,7 @@
 		<br>
 
 		<canvas id="dots" width="325" height="325"></canvas>
+		<p id="counter"></p>
 
 		<form id="questions" onsubmit="return submitForm()">
 			<label for="age">age</label>
@@ -61,7 +66,7 @@
 			<label for="smoker-no">no</label>
 			<br><br>
 
-			<p>smoked?<p>
+			<p>smoked before or secondhand smoked?<p>
 			<input type="radio" id="smoked-yes" name="smoked" required>
 			<label for="smoked-yes">yes</label>
 			<br>
@@ -94,7 +99,7 @@
 			function showError(err) {
 				errElement = document.getElementById("error")
 				errElement.innerHTML += err
-				errElement.style.visibility = "visible"
+				errElement.style.display = "block"
 				throw new Error(err)
 			}
 
@@ -222,6 +227,8 @@
 
 				drawDots(age, exp)
 				document.getElementById("questions").style.display = "none"
+				document.getElementById("counter").innerHTML = "you'll live until around " + exp + ", which means you have around " + (exp - age) + " years left to live."
+				document.getElementById("counter").style.display = "block"
 				document.getElementById("dots").style.display = "block"
 			}
 		</script>
